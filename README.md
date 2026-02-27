@@ -2,11 +2,17 @@
 
 UE5 Blueprint replication handle & net field resolver, built on [CUE4Parse](https://github.com/FabianFG/CUE4Parse).
 
-Scans `.pak` files to discover Blueprint classes and resolves their replication layout handles and ClassNetCache indices using C++ seed data from [RepSeedDumper](https://github.com/Starter-Pack/Dumper-7).
+Scans `.pak` files to discover Blueprint classes and resolves their replication layout handles and ClassNetCache indices using C++ seed data from [RepSeedDumper](https://github.com/Mokocoder/RepSeedDumper).
 
 <img src="assets/screenshot-log.png" width="600"/>
 
 <img src="assets/screenshot-results.png" width="600"/>
+
+## Download
+
+Pre-built binaries are available on the [Releases](https://github.com/Mokocoder/RepSeedResolver/releases) page.
+
+Requires [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (win-x64).
 
 ## Output
 
