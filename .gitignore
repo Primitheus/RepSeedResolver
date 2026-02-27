@@ -1,0 +1,7 @@
+bin/
+obj/
+.vs/
+.claude/
+*.user
+Properties/
+oodle-data-shared.dll
