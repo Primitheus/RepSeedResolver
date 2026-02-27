@@ -218,7 +218,24 @@ internal sealed class SeedResolver
                     if (funcIdx.TryLoad<UFunction>(out var f)
                         && f.FunctionFlags.HasFlag(EFunctionFlags.FUNC_Net))
                     {
-                        netFields.Add(new BpNetField(funcName.Text, "function", 0));
+                        List<RepPropInfo>? funcParams = null;
+                        if (f.ChildProperties != null)
+                        {
+                            foreach (var child in f.ChildProperties)
+                            {
+                                if (child is not FProperty prop) continue;
+                                if (!prop.PropertyFlags.HasFlag(EPropertyFlags.Parm)) continue;
+                                if (prop.PropertyFlags.HasFlag(EPropertyFlags.ReturnParm)) continue;
+
+                                var mapped = PropertyMapper.Map(prop);
+                                if (mapped != null)
+                                {
+                                    funcParams ??= new List<RepPropInfo>();
+                                    funcParams.Add(mapped);
+                                }
+                            }
+                        }
+                        netFields.Add(new BpNetField(funcName.Text, "function", 0, funcParams));
                     }
                 }
                 catch { }

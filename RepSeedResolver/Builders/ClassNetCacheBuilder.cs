@@ -16,12 +16,17 @@ internal static class ClassNetCacheBuilder
             var fieldsArr = new JArray();
             foreach (var f in sc.NetFields)
             {
-                fieldsArr.Add(new JObject
+                var entry = new JObject
                 {
                     ["name"] = f["name"]?.ToString() ?? "",
                     ["type"] = f["type"]?.ToString() ?? "property",
                     ["class"] = f["class"]?.ToString() ?? name,
-                });
+                };
+                if (f["params"] is JArray seedParams && seedParams.Count > 0)
+                    entry["params"] = seedParams;
+                if (f["offset"] is JValue offsetVal)
+                    entry["offset"] = offsetVal;
+                fieldsArr.Add(entry);
             }
 
             classes[name] = new JObject
@@ -56,6 +61,9 @@ internal static class ClassNetCacheBuilder
                     ["class"] = bpName,
                 };
                 if (f.ArrayDim > 1) entry["array_dim"] = f.ArrayDim;
+                if (f.Params is { Count: > 0 })
+                    entry["params"] = SerializeParams(f.Params);
+
                 fieldsArr.Add(entry);
             }
 
@@ -96,6 +104,45 @@ internal static class ClassNetCacheBuilder
         if (seedMax.ContainsKey(name)) return name;
         if (!bpClasses.TryGetValue(name, out var info) || !visited.Add(name)) return null;
         return FindAncestorInSeed(info.Parent, bpClasses, seedMax, visited);
+    }
+
+    private static JArray SerializeParams(List<RepPropInfo> parms)
+    {
+        var arr = new JArray();
+        foreach (var p in parms)
+            arr.Add(SerializeProp(p));
+        return arr;
+    }
+
+    private static JObject SerializeProp(RepPropInfo p)
+    {
+        var obj = new JObject
+        {
+            ["name"] = p.Name,
+            ["type"] = p.TypeStr,
+        };
+        if (p.EnumName != null) obj["enum"] = p.EnumName;
+        if (p.Bits.HasValue) obj["max"] = p.Bits.Value;
+        if (p.EnumValues is { Count: > 0 })
+            obj["values"] = JObject.FromObject(p.EnumValues);
+        if (p.StructType != null) obj["struct_type"] = p.StructType;
+        if (p.StructFields is { Count: > 0 })
+        {
+            var fields = new JArray();
+            foreach (var f in p.StructFields)
+                fields.Add(SerializeProp(f));
+            obj["fields"] = fields;
+        }
+        if (p.MetaClass != null) obj["meta_class"] = p.MetaClass;
+        if (p.ObjectClass != null) obj["object_class"] = p.ObjectClass;
+        if (p.InnerProps is { Count: > 0 })
+        {
+            var inner = new JArray();
+            foreach (var i in p.InnerProps)
+                inner.Add(SerializeProp(i));
+            obj["inner"] = inner;
+        }
+        return obj;
     }
 
     private static int? ResolveNetFieldMax(

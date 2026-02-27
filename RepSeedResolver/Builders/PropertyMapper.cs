@@ -28,10 +28,10 @@ internal static class PropertyMapper
             FStrProperty => new RepPropInfo(name, "string", arrayDim),
             FNameProperty => new RepPropInfo(name, "name", arrayDim),
             FTextProperty => new RepPropInfo(name, "text", arrayDim),
-            FClassProperty => new RepPropInfo(name, "class_ref", arrayDim),
+            FClassProperty cp => MapClassRef(name, cp, arrayDim),
             FSoftObjectProperty => new RepPropInfo(name, "soft_obj", arrayDim),
             FWeakObjectProperty => new RepPropInfo(name, "weak_obj", arrayDim),
-            FObjectProperty => new RepPropInfo(name, "object", arrayDim),
+            FObjectProperty op => MapObject(name, op, arrayDim),
             FInterfaceProperty => new RepPropInfo(name, "interface", arrayDim),
             FStructProperty sp => MapStruct(name, sp, arrayDim),
             FArrayProperty ap => MapArray(name, ap, arrayDim),
@@ -47,6 +47,7 @@ internal static class PropertyMapper
         {
             var info = new RepPropInfo(name, "byte", arrayDim) { EnumName = bp.Enum.Name };
             info.Bits = EnumHelper.ComputeMax(bp.Enum);
+            info.EnumValues = EnumHelper.GetValues(bp.Enum);
             return info;
         }
         return new RepPropInfo(name, "byte", arrayDim);
@@ -56,14 +57,57 @@ internal static class PropertyMapper
     {
         var enumName = !ep.Enum.IsNull ? ep.Enum.Name : null;
         var info = new RepPropInfo(name, "byte", arrayDim) { EnumName = enumName };
-        if (!ep.Enum.IsNull) info.Bits = EnumHelper.ComputeMax(ep.Enum);
+        if (!ep.Enum.IsNull)
+        {
+            info.Bits = EnumHelper.ComputeMax(ep.Enum);
+            info.EnumValues = EnumHelper.GetValues(ep.Enum);
+        }
         return info;
     }
 
     private static RepPropInfo MapStruct(string name, FStructProperty sp, int arrayDim)
     {
         var sn = !sp.Struct.IsNull ? sp.Struct.Name : "Unknown";
-        return new RepPropInfo(name, $"struct:{sn}", arrayDim) { StructType = sn };
+        var info = new RepPropInfo(name, $"struct:{sn}", arrayDim) { StructType = sn };
+        info.StructFields = ExpandStructFields(sp.Struct);
+        return info;
+    }
+
+    private static RepPropInfo MapClassRef(string name, FClassProperty cp, int arrayDim)
+    {
+        var info = new RepPropInfo(name, "class_ref", arrayDim);
+        if (cp.MetaClass is { IsNull: false })
+            info.MetaClass = cp.MetaClass.Name;
+        return info;
+    }
+
+    private static RepPropInfo MapObject(string name, FObjectProperty op, int arrayDim)
+    {
+        var info = new RepPropInfo(name, "object", arrayDim);
+        if (op.PropertyClass is { IsNull: false })
+            info.ObjectClass = op.PropertyClass.Name;
+        return info;
+    }
+
+    private static List<RepPropInfo>? ExpandStructFields(FPackageIndex structRef)
+    {
+        try
+        {
+            if (structRef.IsNull) return null;
+            var ueStruct = structRef.Load<UStruct>();
+            if (ueStruct?.ChildProperties == null || ueStruct.ChildProperties.Length == 0)
+                return null;
+
+            var fields = new List<RepPropInfo>();
+            foreach (var child in ueStruct.ChildProperties)
+            {
+                if (child is not FProperty prop) continue;
+                var mapped = Map(prop);
+                if (mapped != null) fields.Add(mapped);
+            }
+            return fields.Count > 0 ? fields : null;
+        }
+        catch { return null; }
     }
 
     private static RepPropInfo MapArray(string name, FArrayProperty ap, int arrayDim)
@@ -93,6 +137,28 @@ internal static class PropertyMapper
 
 internal static class EnumHelper
 {
+    public static Dictionary<string, long>? GetValues(FPackageIndex enumRef)
+    {
+        try
+        {
+            var ueEnum = enumRef.Load<UEnum>();
+            if (ueEnum == null || ueEnum.Names.Length == 0) return null;
+
+            var values = new Dictionary<string, long>();
+            foreach (var (name, value) in ueEnum.Names)
+            {
+                var s = name.ToString();
+                var pos = s.LastIndexOf("::", StringComparison.Ordinal);
+                if (pos >= 0) s = s[(pos + 2)..];
+                if (s.Equals("MAX", StringComparison.OrdinalIgnoreCase)
+                    || s.EndsWith("_MAX", StringComparison.OrdinalIgnoreCase)) continue;
+                values[s] = value;
+            }
+            return values.Count > 0 ? values : null;
+        }
+        catch { return null; }
+    }
+
     public static int? ComputeMax(FPackageIndex enumRef)
     {
         try
