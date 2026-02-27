@@ -211,7 +211,8 @@ internal sealed class SeedResolver
 
         if (bpClass.FuncMap != null)
         {
-            foreach (var (funcName, funcIdx) in bpClass.FuncMap)
+            /* Sort by name to match UE ClassNetCache ordering */
+            foreach (var (funcName, funcIdx) in bpClass.FuncMap.OrderBy(kv => kv.Key.Text, StringComparer.Ordinal))
             {
                 try
                 {
