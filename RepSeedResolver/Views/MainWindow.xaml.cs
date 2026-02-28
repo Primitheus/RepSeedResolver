@@ -121,6 +121,7 @@ public partial class MainWindow : Window
         var seedPath = TxtSeedPath.Text.Trim();
         var gameName = CmbGame.Text.Trim();
         var usmapPath = TxtUsmapPath.Text.Trim();
+        var aesKey = TxtAesKey.Text.Trim();
         var outputDir = TxtOutputDir.Text.Trim();
 
         if (string.IsNullOrEmpty(paksDir) || string.IsNullOrEmpty(seedPath))
@@ -149,7 +150,7 @@ public partial class MainWindow : Window
                 msg => Dispatcher.Invoke(() => AppendLog(msg)),
                 pct => Dispatcher.Invoke(() => Progress.Value = pct));
 
-            var options = new ResolveOptions(paksDir, seedPath, eGame, usmapPath, outputDir);
+            var options = new ResolveOptions(paksDir, seedPath, eGame, usmapPath, outputDir, aesKey);
             var result = await resolver.RunAsync(options, ct);
 
             _repLayout = result.RepLayout;
@@ -182,6 +183,7 @@ public partial class MainWindow : Window
         TxtSeedPath.IsEnabled = enabled;
         CmbGame.IsEnabled = enabled;
         TxtUsmapPath.IsEnabled = enabled;
+        TxtAesKey.IsEnabled = enabled;
         TxtOutputDir.IsEnabled = enabled;
     }
 

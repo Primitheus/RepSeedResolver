@@ -8,7 +8,8 @@ internal sealed record ResolveOptions(
     string SeedPath,
     EGame Game,
     string UsmapPath,
-    string OutputDir);
+    string OutputDir,
+    string? AesKey = null);
 
 internal sealed record ResolveResult(
     JObject RepLayout,

@@ -34,7 +34,8 @@ dotnet publish -c Release
 2. Load Seed JSON (`replication_seed.json` from RepSeedDumper)
 3. Select Game version
 4. (Optional) Load `.usmap` mappings
-5. Click Run
+5. (Situational) If your game uses encrypted pak files, input the 64 Character AES key.
+6. Click Run
 
 ## How it works
 

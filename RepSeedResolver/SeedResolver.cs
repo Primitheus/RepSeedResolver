@@ -9,6 +9,8 @@ using CUE4Parse.UE4.IO.Objects;
 using CUE4Parse.UE4.Objects.Engine;
 using CUE4Parse.UE4.Objects.UObject;
 using CUE4Parse.UE4.Versions;
+using CUE4Parse.UE4.Objects.Core.Misc;
+using CUE4Parse.Encryption.Aes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -40,7 +42,7 @@ internal sealed class SeedResolver
         InitOodle();
         ct.ThrowIfCancellationRequested();
 
-        using var provider = CreateProvider(options.PaksDir, options.Game, options.UsmapPath);
+        using var provider = CreateProvider(options.PaksDir, options.Game, options.UsmapPath, options.AesKey);
         ct.ThrowIfCancellationRequested();
 
         var bpClassIndex = FindBpClassIndex(provider);
@@ -87,7 +89,7 @@ internal sealed class SeedResolver
         return new SeedData(classes);
     }
 
-    private DefaultFileProvider CreateProvider(string paksDir, EGame eGame, string usmapPath)
+    private DefaultFileProvider CreateProvider(string paksDir, EGame eGame, string usmapPath, string? aesKey)
     {
         var sw = Stopwatch.StartNew();
         var provider = new DefaultFileProvider(
@@ -99,6 +101,13 @@ internal sealed class SeedResolver
         {
             provider.MappingsContainer = new FileUsmapTypeMappingsProvider(usmapPath);
             Log($"Loaded mappings: {usmapPath}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(aesKey))
+        {
+            var key = new FAesKey(aesKey);
+            provider.SubmitKey(new FGuid(0), key);
+            Log($"Submitted AES key: {aesKey[..4]}...");
         }
 
         provider.Mount();

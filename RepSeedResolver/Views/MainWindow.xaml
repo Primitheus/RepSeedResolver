@@ -61,6 +61,7 @@
                             <RowDefinition Height="36"/>
                             <RowDefinition Height="36"/>
                             <RowDefinition Height="36"/>
+                            <RowDefinition Height="36"/>
                         </Grid.RowDefinitions>
 
                         <Label Grid.Row="0" Grid.Column="0" Content="Paks Dir"/>
@@ -83,9 +84,13 @@
                         <Button Grid.Row="3" Grid.Column="2" Style="{StaticResource BrowseBtn}"
                                 Click="BrowseUsmap" Margin="4,0,0,0"/>
 
-                        <Label Grid.Row="4" Grid.Column="0" Content="Output Dir"/>
-                        <TextBox Grid.Row="4" Grid.Column="1" x:Name="TxtOutputDir"/>
-                        <Button Grid.Row="4" Grid.Column="2" Style="{StaticResource BrowseBtn}"
+                        <Label Grid.Row="4" Grid.Column="0" Content="AES Key"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" x:Name="TxtAesKey"
+                                 Tag="0x... (64 hex chars)"/>
+
+                        <Label Grid.Row="5" Grid.Column="0" Content="Output Dir"/>
+                        <TextBox Grid.Row="5" Grid.Column="1" x:Name="TxtOutputDir"/>
+                        <Button Grid.Row="5" Grid.Column="2" Style="{StaticResource BrowseBtn}"
                                 Click="BrowseOutputDir" Margin="4,0,0,0"/>
                     </Grid>
                 </Border>
